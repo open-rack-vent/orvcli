@@ -94,7 +94,7 @@ def configure_pwm_pin(pwm_pin: PWMPin, period_ns: int, duty_pct: float) -> List[
         ),
         echo_value(
             path=device_tree_base_path.joinpath("duty_cycle"),
-            value=str(period_ns * duty_pct),
+            value=str(int(period_ns * duty_pct)),
         ),
         echo_value(
             path=device_tree_base_path.joinpath("enable"),
@@ -113,7 +113,7 @@ def main() -> None:
 
     # Somehow, this mapping will be passed in from the user.
     module_to_pin: Dict[int, PWMPin] = {
-        0: PWMPin.P8_19,
+        0: PWMPin.P9_14,
     }
 
     @app.get("/")
@@ -123,7 +123,7 @@ def main() -> None:
     @app.post("/fan/{module_number}/{power}")
     def change_module_power(
         module_number: int,
-        power: Annotated[float, fastapi.Path(gt=0, lt=1.0)],
+        power: Annotated[float, fastapi.Path(gt=0, le=1.0)],
     ) -> Dict[str, str | List[str]]:
 
         pwm_pin = module_to_pin[module_number]
