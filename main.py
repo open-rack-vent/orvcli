@@ -64,7 +64,7 @@ class ADCPin(str, Enum):
     P9_40 = "P9_40"
 
 
-_ADC_PORT_LOOKUP: Dict[ADCPin, int] = {
+_ANALOG_IN_LOOKUP: Dict[ADCPin, int] = {
     ADCPin.P9_39: 0,
     ADCPin.P9_40: 1,
     ADCPin.P9_37: 2,
@@ -87,6 +87,17 @@ def echo_value(path: Path, value: str) -> str:
         file.write(value)
 
     return f"echo {path} > {value}"
+
+
+def cat_value(path: Path) -> str:
+    """
+    Read the contents of a file, like the `cat` command.
+    :param path: Path to read.
+    :return: The contents of the file as a string.
+    """
+
+    with open(str(path.resolve()), "r", encoding="utf-8") as file:
+        return file.read()
 
 
 def configure_pwm_pin(pwm_pin: PWMPin, period_ns: int, duty_pct: float) -> List[str]:
@@ -130,14 +141,14 @@ def configure_pwm_pin(pwm_pin: PWMPin, period_ns: int, duty_pct: float) -> List[
     ]
 
 
-def read_adc_counts(adc_port: int) -> int:  # pylint: disable=unused-argument
+def read_adc_counts(ain_number: int) -> int:  # pylint: disable=unused-argument
+    """
+    Read the ADC counts of a given analog input.
+    :param ain_number: Analog In (AIN) number. 0-6 on the Beagle Bone Black.
+    :return: ADC counts as an int.
     """
 
-    :param adc_pin:
-    :return:
-    """
-
-    return 4096 // 2
+    return int(cat_value(Path(f"/sys/bus/iio/devices/iio:device0/in_voltage{ain_number}_raw")))
 
 
 def main() -> None:
@@ -149,7 +160,7 @@ def main() -> None:
     app = fastapi.FastAPI()
 
     # Somehow, this mapping will be passed in from the user.
-    module_to_pin: Dict[int, PWMPin] = {
+    module_to_pwm_pin: Dict[int, PWMPin] = {
         0: PWMPin.P9_14,
     }
 
@@ -157,36 +168,45 @@ def main() -> None:
 
     @app.get("/")
     def read_root() -> Dict[str, str]:
+        """
+        Proves the server is working.
+        :return: Response dict.
+        """
         return {"Hello": "World"}
 
-    @app.post("/fan/{module_number}/{power}")
+    @app.post("/fan/{module_number}/{power}", description="Set the power of a given fan module.")
     def change_module_power(
         module_number: int,
         power: Annotated[float, fastapi.Path(ge=0, le=1.0)],
     ) -> Dict[str, str | List[str]]:
+        """
+        Set the power of a given fan module.
+        :param module_number: Module to effect.
+        :param power: Power that will be set.
+        :return: Response dict.
+        """
 
-        pwm_pin = module_to_pin[module_number]
-        pwm_channel = _PWM_CHANNEL_LOOKUP[pwm_pin]
+        pwm_pin: PWMPin = module_to_pwm_pin[module_number]
+        pwm_channel: PWMChannel = _PWM_CHANNEL_LOOKUP[pwm_pin]
 
         return {
             "pwm_channel": str(pwm_channel),
             "commands": configure_pwm_pin(pwm_pin=pwm_pin, period_ns=40_000, duty_pct=power),
         }
 
-    @app.get("/temperature/{adc_port}")
-    def read_temperature(
-        adc_port: Annotated[
-            int,
-            fastapi.Path(ge=min(_ADC_PORT_LOOKUP.values()), le=max(_ADC_PORT_LOOKUP.values())),
-        ]
-    ) -> Dict[str, str]:
+    @app.get(
+        "/temperature/{pin}",
+        description="Get the temperature of the thermistor attached to the given input pin.",
+    )
+    def read_temperature(pin: str) -> Dict[str, float]:
+        """
+        Get the temperature of the thermistor attached to the given input pin.
+        :param pin: Pin to read from.
+        :return: Reading as a dict.
         """
 
-        :param adc_port:
-        :return:
-        """
-
-        return {str(adc_port): str(temperature_converter(read_adc_counts(adc_port=adc_port)))}
+        adc_port: int = _ANALOG_IN_LOOKUP[ADCPin(pin)]
+        return {str(adc_port): temperature_converter(read_adc_counts(ain_number=adc_port))}
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
