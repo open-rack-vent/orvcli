@@ -113,6 +113,12 @@ def cli() -> None:
     help=click_help_for_pydantic_model(
         help_prefix="JSON payload string with keys:", model=WireMapping
     ),
+    default=(
+        '{"version":"1","upper_intake_fans":["ONBOARD","PN3"],'
+        '"lower_intake_fans":["PN2","PN5"],"upper_exhaust_fans":[],'
+        '"intake_thermistor_pins":["TMP0","TMP1"],'
+        '"exhaust_thermistor_pins":["TMP4","TMP5"]}'
+    ),
     envvar="ORV_WIRE_MAPPING_JSON",
     show_envvar=True,
 )

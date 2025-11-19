@@ -18,7 +18,7 @@ class BoardMarkingActiveLowPWM(str, Enum):
     pn5 = "PN5"
 
 
-class BoardMarkingTempPin(str, Enum):
+class BoardMarkingThermistorPin(str, Enum):
     """
     Board markings for the different temperature sensor inputs. They are designed to be connected to
     3950K 10K ohm NTC thermistor probes.

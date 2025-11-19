@@ -272,7 +272,7 @@ class BoardMarkingLookups(NamedTuple):
     """
 
     pwm: Dict[board_markings.BoardMarkingActiveLowPWM, PWMPin]
-    thermistor: Dict[board_markings.BoardMarkingTempPin, ADCPin]
+    thermistor: Dict[board_markings.BoardMarkingThermistorPin, ADCPin]
     led: Dict[board_markings.OnboardLED, GPIOPin]
 
 
@@ -286,13 +286,13 @@ BBB_V100_BOARD_MARKINGS_TO_PINS = BoardMarkingLookups(
         board_markings.BoardMarkingActiveLowPWM.pn5: PWMPin.P8_19,  # Bottom left
     },
     thermistor={
-        board_markings.BoardMarkingTempPin.tmp0: ADCPin.P9_35,
-        board_markings.BoardMarkingTempPin.tmp1: ADCPin.P9_36,
-        board_markings.BoardMarkingTempPin.tmp2: ADCPin.P9_33,
-        board_markings.BoardMarkingTempPin.tmp3: ADCPin.P9_37,
-        board_markings.BoardMarkingTempPin.tmp4: ADCPin.P9_39,
-        board_markings.BoardMarkingTempPin.tmp5: ADCPin.P9_38,
-        board_markings.BoardMarkingTempPin.tmp6: ADCPin.P9_40,
+        board_markings.BoardMarkingThermistorPin.tmp0: ADCPin.P9_35,
+        board_markings.BoardMarkingThermistorPin.tmp1: ADCPin.P9_36,
+        board_markings.BoardMarkingThermistorPin.tmp2: ADCPin.P9_33,
+        board_markings.BoardMarkingThermistorPin.tmp3: ADCPin.P9_37,
+        board_markings.BoardMarkingThermistorPin.tmp4: ADCPin.P9_39,
+        board_markings.BoardMarkingThermistorPin.tmp5: ADCPin.P9_38,
+        board_markings.BoardMarkingThermistorPin.tmp6: ADCPin.P9_40,
     },
     led={
         board_markings.OnboardLED.run: GPIOPin.P9_13,
@@ -322,7 +322,7 @@ def create_interface(
     temperature_converter = thermistor.create_adc_counts_to_temperature_converter()
 
     def create_read_all_temperatures(
-        input_board_markings: List[board_markings.BoardMarkingTempPin],
+        input_board_markings: List[board_markings.BoardMarkingThermistorPin],
     ) -> List[float]:
         """
         Read the temperatures for the thermistor pins.
@@ -356,10 +356,10 @@ def create_interface(
             gpio_pin=board_marking_lookup.led[onboard_led], value=value
         ),
         read_all_intake_temperatures=lambda: create_read_all_temperatures(
-            wire_mapping.intake_temperature_pins
+            wire_mapping.intake_thermistor_pins
         ),
         read_all_exhaust_temperatures=lambda: create_read_all_temperatures(
-            wire_mapping.exhaust_temperature_pins
+            wire_mapping.exhaust_thermistor_pins
         ),
         lower_intake_fan_controls=create_fan_controls(
             input_board_markings=wire_mapping.lower_intake_fans

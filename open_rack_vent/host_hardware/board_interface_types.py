@@ -52,9 +52,8 @@ class WireMapping(BaseModel):
     lower_intake_fans: List[board_markings.BoardMarkingActiveLowPWM]
     upper_exhaust_fans: List[board_markings.BoardMarkingActiveLowPWM]
 
-    intake_temperature_pins: List[board_markings.BoardMarkingTempPin]
-    exhaust_temperature_pins: List[board_markings.BoardMarkingTempPin]
-    environment_temperature_pins: List[board_markings.BoardMarkingTempPin]
+    intake_thermistor_pins: List[board_markings.BoardMarkingThermistorPin]
+    exhaust_thermistor_pins: List[board_markings.BoardMarkingThermistorPin]
 
 
 class OpenRackVentHardwareInterface(NamedTuple):
@@ -72,3 +71,31 @@ class OpenRackVentHardwareInterface(NamedTuple):
     lower_intake_fan_controls: List[Callable[[float], List[str]]]
     upper_intake_fan_controls: List[Callable[[float], List[str]]]
     upper_exhaust_fan_controls: List[Callable[[float], List[str]]]
+
+
+if __name__ == "__main__":
+
+    # This is a simple WireMapping
+
+    builtin_mapping = WireMapping(
+        version=WireMappingVersion.version_1,
+        upper_intake_fans=[
+            board_markings.BoardMarkingActiveLowPWM.onboard,
+            board_markings.BoardMarkingActiveLowPWM.pn3,
+        ],
+        lower_intake_fans=[
+            board_markings.BoardMarkingActiveLowPWM.pn2,
+            board_markings.BoardMarkingActiveLowPWM.pn5,
+        ],
+        upper_exhaust_fans=[],
+        intake_thermistor_pins=[
+            board_markings.BoardMarkingThermistorPin.tmp0,
+            board_markings.BoardMarkingThermistorPin.tmp1,
+        ],
+        exhaust_thermistor_pins=[
+            board_markings.BoardMarkingThermistorPin.tmp4,
+            board_markings.BoardMarkingThermistorPin.tmp5,
+        ],
+    )
+
+    print(builtin_mapping.model_dump_json())
