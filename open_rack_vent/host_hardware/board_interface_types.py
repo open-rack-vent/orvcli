@@ -80,12 +80,12 @@ if __name__ == "__main__":
     builtin_mapping = WireMapping(
         version=WireMappingVersion.version_1,
         upper_intake_fans=[
-            board_markings.BoardMarkingActiveLowPWM.onboard,
-            board_markings.BoardMarkingActiveLowPWM.pn3,
+            board_markings.BoardMarkingActiveLowPWM.onboard,  # Top Right Fan
+            board_markings.BoardMarkingActiveLowPWM.pn3,  # Top Left Fan
         ],
         lower_intake_fans=[
-            board_markings.BoardMarkingActiveLowPWM.pn2,
-            board_markings.BoardMarkingActiveLowPWM.pn5,
+            board_markings.BoardMarkingActiveLowPWM.pn2,  # Bottom Right Fan
+            board_markings.BoardMarkingActiveLowPWM.pn5,  # Bottom left Fan
         ],
         upper_exhaust_fans=[],
         intake_thermistor_pins=[

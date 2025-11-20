@@ -10,3 +10,4 @@ from open_rack_vent.host_hardware.board_interface_types import (
     WireMapping,
 )
 from open_rack_vent.host_hardware.board_interfaces import create_hardware_interface
+from open_rack_vent.host_hardware.board_markings import OnboardLED

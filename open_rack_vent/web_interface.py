@@ -11,7 +11,7 @@ from typing import Dict, List
 import fastapi
 import uvicorn
 
-from open_rack_vent.host_hardware import OpenRackVentHardwareInterface
+from open_rack_vent.host_hardware import OnboardLED, OpenRackVentHardwareInterface
 
 
 class RackLevel(str, Enum):
@@ -107,5 +107,23 @@ def create_web_interface(hardware_interface: OpenRackVentHardwareInterface) -> N
             raise ValueError(f"Invalid rack side: {side}")
 
         return {"temperature": statistics.mean(read_temperatures())}
+
+    @app.get(
+        "/setLED/{led}/{state}",
+        description="Get the average temperature of the thermistors on the specified rack side.",
+    )
+    def set_led(
+        led: OnboardLED = fastapi.Path(description="The LED to modify"),
+        state: bool = fastapi.Path(description="The state to set the LED to."),
+    ) -> Dict[str, List[str]]:
+        """
+        Override the LED state of the different status LEDs.
+
+        :param led: The board marking of the LED to modify.
+        :param state: The on/off state of the LED. True to turn it on... please...
+        :return: A dict containing the commands executed to set the LED. For debugging.
+        """
+
+        return {"commands": hardware_interface.set_onboard_led(led, state)}
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
