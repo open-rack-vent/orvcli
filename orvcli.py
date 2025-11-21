@@ -1,21 +1,37 @@
 """Main module."""
 
 import json
+import logging
 from enum import Enum
 from functools import partial
-from typing import Any, Type, get_args, get_origin
+from itertools import count
+from typing import Any, Callable, Optional, Type, get_args, get_origin
 
 import click
+from apscheduler.schedulers.background import BackgroundScheduler
 from bonus_click import options
 from pydantic import BaseModel, ValidationError
 
 from open_rack_vent import web_interface
 from open_rack_vent.host_hardware import (
     HardwarePlatform,
+    OnboardLED,
     PCBRevision,
     WireMapping,
     create_hardware_interface,
 )
+from open_rack_vent.host_hardware.board_interface_types import OpenRackVentHardwareInterface
+
+LOGGER_FORMAT = "[%(asctime)s - %(process)s - %(name)20s - %(levelname)s] %(message)s"
+LOGGER_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=LOGGER_FORMAT,
+    datefmt=LOGGER_DATE_FORMAT,
+)
+
+LOGGER = logging.getLogger(__name__)
 
 
 def type_to_str(annotation: type) -> str:
@@ -77,6 +93,18 @@ def validate_pydantic_json(
         raise click.BadParameter(f"Invalid JSON: {e.msg}")
     except ValidationError as e:
         raise click.BadParameter(f"Pydantic validation failed: {e}")
+
+
+def toggling_job(bool_callable: Callable[[bool], None], state_count: "count[int]") -> None:
+    """
+    Apscheduler job function that takes a bool callable and a thread safe counter and repeatedly
+    calls `bool_callable` with true/false (using the state_count).
+    :param bool_callable: To call
+    :param state_count: Used to get the toggling behavior.
+    :return: None
+    """
+
+    bool_callable(bool(next(state_count) % 2 == 0))
 
 
 @click.group()
@@ -143,17 +171,49 @@ def run(
     :param platform: See click docs!
     :param pcb_revision: See click docs!
     :param wire_mapping: See click docs!
+    :param web_api: See click docs!
     :return: None
     """
 
-    hardware_interface = create_hardware_interface(
-        pcb_revision=pcb_revision,
-        platform=platform,
-        wire_mapping=wire_mapping,
-    )
+    hardware_interface: Optional[OpenRackVentHardwareInterface] = None
 
-    if web_api:
-        web_interface.create_web_interface(hardware_interface=hardware_interface)
+    try:
+
+        hardware_interface.set_onboard_led(OnboardLED.fault, False)
+
+        scheduler = BackgroundScheduler()
+        scheduler.start()
+
+        scheduler.add_job(
+            toggling_job,
+            "interval",
+            seconds=5,
+            args=(lambda v: hardware_interface.set_onboard_led(OnboardLED.run, v), count(0)),
+        )
+
+        hardware_interface = create_hardware_interface(
+            pcb_revision=pcb_revision,
+            platform=platform,
+            wire_mapping=wire_mapping,
+        )
+
+        if web_api:
+
+            scheduler.add_job(
+                toggling_job,
+                "interval",
+                seconds=5,
+                args=(lambda v: hardware_interface.set_onboard_led(OnboardLED.web, v), count(0)),
+            )
+
+            web_interface.create_web_interface(hardware_interface=hardware_interface)
+
+    except Exception as _exn:  # pylint: disable=broad-except
+
+        if hardware_interface is not None:
+            hardware_interface.set_onboard_led(OnboardLED.fault, True)
+
+        LOGGER.exception("Uncaught Error! Stopping Open Rack Vent")
 
 
 if __name__ == "__main__":
