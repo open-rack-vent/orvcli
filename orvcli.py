@@ -34,6 +34,9 @@ logging.basicConfig(
 LOGGER = logging.getLogger(__name__)
 
 
+logging.getLogger("apscheduler").setLevel(logging.ERROR)
+
+
 def type_to_str(annotation: type) -> str:
     """
     Convert a type annotation into a readable representation for help text.
@@ -212,7 +215,7 @@ def run(
         scheduler.add_job(
             toggling_job,
             "interval",
-            seconds=5,
+            seconds=0.5,
             args=(lambda v: hardware_interface.set_onboard_led(OnboardLED.run, v), count(0)),
         )
 
@@ -221,7 +224,7 @@ def run(
             scheduler.add_job(
                 toggling_job,
                 "interval",
-                seconds=5,
+                seconds=0.5,
                 args=(lambda v: hardware_interface.set_onboard_led(OnboardLED.web, v), count(0)),
             )
 

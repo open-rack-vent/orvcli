@@ -30,7 +30,7 @@ def create_web_interface(hardware_interface: OpenRackVentHardwareInterface) -> N
         """
         return {"Hello": "World"}
 
-    @app.post("/fan/location/{power}", description="Sets the power of different fans.")
+    @app.post("/fan/{location}/{power}", description="Sets the power of different fans.")
     def change_fan_power(
         location: RackLocation = fastapi.Path(description="The location in the rack to affect."),
         power: float = fastapi.Path(ge=0, le=1.0, description="Power level to set"),
@@ -64,7 +64,7 @@ def create_web_interface(hardware_interface: OpenRackVentHardwareInterface) -> N
         """
         Get the average temperature of all thermistors on a given rack side.
 
-        :param side: Side of the rack to read temperatures from (intake or exhaust).
+        :param location: Location within the rack to read the temperature from.
         :return: Dictionary with the average temperature, e.g. {"temperature": 32.5}.
         """
         try:
@@ -76,9 +76,9 @@ def create_web_interface(hardware_interface: OpenRackVentHardwareInterface) -> N
             "temperature": statistics.mean([read_function() for read_function in read_temperatures])
         }
 
-    @app.get(
+    @app.post(
         "/setLED/{led}/{state}",
-        description="Get the average temperature of the thermistors on the specified rack side.",
+        description="Override the state of one of the onboard LEDs",
     )
     def set_led(
         led: OnboardLED = fastapi.Path(description="The LED to modify"),
