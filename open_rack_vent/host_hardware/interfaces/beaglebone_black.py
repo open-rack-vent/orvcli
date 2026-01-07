@@ -333,13 +333,20 @@ def create_interface(
         :return: List of resulting temperatures in Celsius.
         """
 
-        return [
-            partial(
-                temperature_converter,
-                read_adc_counts(adc_pin=board_marking_lookup.thermistor[board_marking]),
+        def create_read_temperature(
+            board_marking: board_markings.BoardMarkingThermistorPin,
+        ) -> TemperatureReader:
+            """
+
+            :param board_marking:
+            :return:
+            """
+
+            return lambda: temperature_converter(
+                read_adc_counts(adc_pin=board_marking_lookup.thermistor[board_marking])
             )
-            for board_marking in input_board_markings
-        ]
+
+        return [create_read_temperature(board_marking) for board_marking in input_board_markings]
 
     def create_fan_controls(
         input_board_markings: List[board_markings.BoardMarkingActiveLowPWM],

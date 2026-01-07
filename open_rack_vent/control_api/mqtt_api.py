@@ -8,7 +8,7 @@ import logging
 import statistics
 import threading
 import time
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 import paho.mqtt.client as mqtt
 
@@ -232,7 +232,6 @@ def run_open_rack_vent_mqtt(  # pylint: disable=too-many-positional-arguments
             pcb_revision=pcb_revision,
         )
 
-        # Haven't re-worked below this line
         mqtt_client.on_message = make_on_message(orv_hardware_interface, device_id)
         mqtt_client.username_pw_set(mqtt_username, mqtt_password)
         mqtt_client.connect(broker_host, broker_port, 60)
@@ -248,7 +247,7 @@ def run_open_rack_vent_mqtt(  # pylint: disable=too-many-positional-arguments
                         temperatures = list(filter(None, [read_fn() for read_fn in readers]))
 
                         if temperatures:
-                            payload = json.dumps({"temperature": statistics.mean(temperatures)})
+                            payload: Union[str, float] = statistics.mean(temperatures)
                         else:
                             payload = "unavailable"
 

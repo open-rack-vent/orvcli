@@ -255,7 +255,7 @@ def run_options() -> Callable[[FC], FC]:
             ),
             click.option(
                 "--mqtt-broker-host",
-                default="homeassistant",
+                default="homeassistant.local",
                 show_default=True,
                 help="Hostname or IP of the MQTT broker.",
                 envvar=_ENV_VAR_MAPPING["mqtt_broker_host"],
