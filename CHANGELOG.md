@@ -1,5 +1,11 @@
 # Changelog
 
+0.3.2 - (2026-01-07)
+------------------
+
+* Preps the repo for publication and fills in some docs, no code changes.
+
+
 0.3.1 - (2026-01-07)
 ------------------
 
